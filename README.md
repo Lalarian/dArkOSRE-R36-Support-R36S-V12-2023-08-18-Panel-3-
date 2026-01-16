@@ -13,9 +13,10 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/southoz/dArkOS-G80CA-SE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-SE/releases)
 [![GitHub stars](https://img.shields.io/github/stars/southoz/dArkOS-G80CA-SE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-SE/stargazers)
 
-## Prelease Version - [Mega](https://mega.nz/file/42QTRJQK#UaJIe9A9ffMVRIxDpnMK_fwtF5-AS-3XAzs4BXkFtCs)
-- Hash - B8D333EE540A4B3B445B9252367BA1AB7E00CFA4 
-- Testing only, there is a significant amount of work to be done on the emulated systems' fine-tuning and user documentation.
+## Prelease Version - [Mega](https://mega.nz/file/ovox3CIY#pzT-MI-tXj5eFL4XV8S3-TNBO8-91aPlm3_uC5Xng9Y)
+- Hash - 2CC92FA884E9C762EEC4354C17210233FDF8E47D
+- dArkOS 01142026 Version 
+- Testing only, with work to be done on the emulated systems' fine-tuning and user documentation.
 - See the [Wiki](https://github.com/southoz/dArkOS-G80CA-RE/wiki) for completed items.
 - If you are using a second SD Card, ensure you read the instructions in the Wiki and delete the controls.ini, ppsspp.ini and ppsspp.ini.sdl out of the /psp/ppsspp folder.
 - dArkOS update supported (recommended) but will overwrite the Battery LED process.
