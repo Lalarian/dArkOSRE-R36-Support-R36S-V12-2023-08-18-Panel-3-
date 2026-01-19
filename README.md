@@ -17,7 +17,7 @@
 
 - Screen Panel 8 (default) and [Panel 9](https://github.com/southoz/dArkOS-G80CA-RE/tree/main/files/DTB/Panel9)
 - Wi-Fi (rtl8192cu, rtl8821cu, rtl8812au and mt7601u verified)
-- Joystick (uses **dArkOS native** control scheme for games & EmulationStation)
+- Joystick with per-emulator controls and hotkeys.
 - Function Button
 - Sound (speakers + headphones)
 - Battery LED behaviour:
