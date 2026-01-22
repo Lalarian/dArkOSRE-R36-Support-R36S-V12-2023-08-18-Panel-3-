@@ -13,12 +13,13 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/southoz/dArkOS-G80CA-SE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-SE/releases)
 [![GitHub stars](https://img.shields.io/github/stars/southoz/dArkOS-G80CA-SE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-SE/stargazers)
 
-## ✅ What's Working
+## ✅ Features
 
-- Screen Panel 8 (default) and [Panel 9](https://github.com/southoz/dArkOS-G80CA-RE/tree/main/files/DTB/Panel9)
+- Advanced Drastic 
+- Screen Panel 8 (default) and [Panel 9](https://github.com/southoz/dArkOS-G80CA-RE/tree/main/files/DTB/Panel9) support.
 - Wi-Fi (rtl8192cu, rtl8821cu, rtl8812au and mt7601u verified)
-- Joystick with per-emulator controls and hotkeys.
-- Function Button
+- Joystick with per-emulator controls updates and hotkeys.
+- Function button support (Menu).
 - Sound (speakers + headphones)
 - Battery LED behaviour:
    - **Blue** ≥ 20%
