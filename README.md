@@ -15,7 +15,7 @@
 - **Guaranteed Virus and Malware free** - Scanned with 4th Feb 2026 ClamAV Daily update.
 
 Confirmed working with:
-- G80C-MB V1.1-20250319 Panel 8
+- G80C-MB V1.1-20250319 [Panel 8](https://github.com/southoz/dArkOS-G80CA-RE/tree/main/files/DTB/G80C-MB%20V1.1-20250319/Panel8)
 - G80C-MB V1.1-20250319 [Panel 9](https://github.com/southoz/dArkOS-G80CA-RE/tree/main/files/DTB/G80C-MB%20V1.1-20250319/Panel9) thanks to filthyc0mmie
 - G80CA-MB V1.2-20250422 Panel 8
 - G80CA-MB V1.2-20250422 [Panel 9](https://github.com/southoz/dArkOS-G80CA-RE/tree/main/files/DTB/G80CA-MB%20V1.2-20250422/Panel9)
