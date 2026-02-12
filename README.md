@@ -4,7 +4,7 @@
 <img width="408" height="640" alt="image" src="https://github.com/user-attachments/assets/d0334598-9296-466f-8e6e-4ca2e15daf70" />
 </p>
 
-**Customised dArkOS build** optimised for select clones and genuine R36S devices. 
+**Customised dArkOS build** optimised for selected clones and genuine R36S devices. 
 (RK3326-based RG351MP clones)
 
 <p align="center">
