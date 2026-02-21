@@ -46,7 +46,7 @@
 - R36S-V20 2025-05-18 Vatiant 1 and Variant 2 (in testing)
 - Bring back Drastic! - Selectable Advanced Drastic and Drastic (ready for testing)
 - Fix bg music not playing on SD1 (ready for testing)
-- Fix Swap SD1 / SD2 Kodi database (yup, I missed this one when releasing the image).
+- Fix Swap SD1 / SD2 Kodi database (yup, I missed integrating the update scripts one when releasing the image).
 - Developer ID and Pass in Screenscaper (compiling now, make clean didn't work)
 - ogage update to support Jason3x's Pulse Audio implementation.
 - Script to update the controls for each emulator to support the R36H
