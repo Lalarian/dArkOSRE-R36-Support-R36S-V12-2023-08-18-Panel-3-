@@ -56,7 +56,7 @@
 - LED swap scripts for different devices (R36S, Clones and Soysauce)
 - Supporting community requests for device support.
 
-### If your Rk3326 based R36S, R36S Clone or Soy Sauce system is not listed
+### If your Rk3326-based R36S, R36S Clone or Soy Sauce system is not listed
 Raise an [issue](https://github.com/southoz/dArkOS-G80CA-RE/issues) with the motherboard ID and attach your original SD card .dtb files and boot.ini in a zip file
 
 ## ✅ Features
