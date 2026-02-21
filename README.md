@@ -40,8 +40,8 @@
 - [Y3506_V05_20251215 2551](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation#soy-sauce-r36s) thanks to Pedro
 - [Y3506_V05_20251215 2601](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation#soy-sauce-r36s) thanks to Lucannus
 
-### Not fully supported (No Function Button for Emulator Menus):  
-- R36H thanks to xgenmann
+### Not fully supported (No Function Button for Emulator Menus by default):  
+- R36H thanks to the champion, xgenmann, for his help to get this **Operating System** working on his device!
 
 ### In development:
 - R36S-V20 2025-05-18 Vatiant 1 and Variant 2 (in testing)
