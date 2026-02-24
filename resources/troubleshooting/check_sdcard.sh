@@ -1,73 +1,106 @@
 #!/bin/bash
 
-# SD Card and Mounted Filesystems Debug and Fix Script for RK3326 R36S Clone on dArkOS
-# This script collects detailed information about mounted filesystems and inserted SD cards, and attempts to fix issues.
+# SD Card and Mounted Filesystems Debug Script for RK3326 R36S Clone on dArkOS
+# This script collects detailed information about mounted filesystems and inserted SD cards.
 # It targets problems like the second SD card not being detected when inserted.
-# Common causes: MMC controller not probing, DTB mismatches, regulator failures, or filesystem errors.
+# Outputs to BOTH screen (/dev/tty1) and log file using tee.
 # Logs to sd_card_debug.log in script dir (handles symlinks).
-# Run from EmulationStation; reboot may be needed after fixes.
+# Run from EmulationStation; no fixes or speed tests on raw devices – only safe checks.
 
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 LOGFILE="${SCRIPT_DIR}/sd_card_debug.log"
 
-echo "Starting mounted filesystems and SD card analysis and fix attempt..." | tee $LOGFILE
-echo "Timestamp: $(date)" >> $LOGFILE
-echo "User: $(whoami)" >> $LOGFILE
-echo "Hostname: $(hostname)" >> $LOGFILE
-cat /proc/cpuinfo | grep -i 'model name\|hardware' >> "$LOGFILE"
+# Function to log to both screen and file with tee
+log() {
+    echo -e "$@" | tee -a "$LOGFILE" /dev/tty1
+}
 
-echo "\n=== System Overview ===" >> $LOGFILE
-uname -a >> $LOGFILE 2>&1
-cat /etc/os-release >> $LOGFILE 2>&1 || echo "No /etc/os-release found" >> $LOGFILE
+# Function to run commands and tee output to log and screen
+run_cmd() {
+    "$@" 2>&1 | tee -a "$LOGFILE" /dev/tty1
+}
 
-echo "\n=== Kernel Command Line (for DTB/overlay info) ===" >> $LOGFILE
-cat /proc/cmdline >> $LOGFILE 2>&1
+log "Starting mounted filesystems and SD card analysis..."
+log "Timestamp: $(date)"
+log "User: $(whoami)"
+log "Hostname: $(hostname)"
+run_cmd cat /proc/cpuinfo | grep -i 'model name\|hardware'
 
-echo "\n=== Loaded Modules (lsmod | grep mmc/sd/storage) ===" >> $LOGFILE
-lsmod | grep -iE 'mmc|sd|storage|disk|block|dwmmc|rockchip' >> $LOGFILE 2>&1 || echo "No matching modules found" >> $LOGFILE
+log "\n=== System Overview ==="
+run_cmd uname -a
+run_cmd cat /etc/os-release || log "No /etc/os-release found"
 
-echo "\n=== Full dmesg Output (kernel logs) ===" >> $LOGFILE
-dmesg >> $LOGFILE 2>&1
+log "\n=== Kernel Command Line (for DTB/overlay info) ==="
+run_cmd cat /proc/cmdline
 
-echo "\n=== Filtered dmesg for SD/Storage-Related Messages (Deeper Grep) ===" >> $LOGFILE
-dmesg | grep -iE 'mmc|sd|storage|disk|block|dwmmc|rockchip|mount|fsck|fat|exfat|error|fail|probe|regulator|power|domain|defer|detect|insert' >> $LOGFILE 2>&1 || echo "No SD/storage-related dmesg entries" >> $LOGFILE
+log "\n=== Loaded Modules (lsmod | grep mmc/sd/storage) ==="
+run_cmd lsmod | grep -iE 'mmc|sd|storage|disk|block|dwmmc|rockchip' || log "No matching modules found"
 
-echo "\n=== Mounted Filesystems (mount) ===" >> $LOGFILE
-mount >> $LOGFILE 2>&1 || echo "mount command failed" >> $LOGFILE
+log "\n=== Full dmesg Output (kernel logs) ==="
+run_cmd dmesg
 
-echo "\n=== Disk Usage (df -h) ===" >> $LOGFILE
-df -h >> $LOGFILE 2>&1 || echo "df command failed" >> $LOGFILE
+log "\n=== Mounted Filesystems (mount) ==="
+run_cmd mount || log "mount command failed"
 
-echo "\n=== Block Devices (lsblk -f) ===" >> $LOGFILE
-lsblk -f >> $LOGFILE 2>&1 || echo "lsblk not found" >> $LOGFILE
+log "\n=== Disk Usage (df -h) ==="
+run_cmd df -h || log "df command failed"
 
-echo "\n=== Disk UUIDs (blkid) ===" >> $LOGFILE
-sudo blkid >> $LOGFILE 2>&1 || echo "blkid not found or sudo failed" >> $LOGFILE
+log "\n=== Block Devices (lsblk -f) ==="
+run_cmd lsblk -f || log "lsblk not found"
 
-echo "\n=== fstab Contents (/etc/fstab) ===" >> $LOGFILE
-cat /etc/fstab >> $LOGFILE 2>&1 || echo "No /etc/fstab found" >> $LOGFILE
+log "\n=== Disk UUIDs (blkid) ==="
+sudo blkid | tee -a "$LOGFILE" /dev/tty1 2>&1 || log "blkid not found or sudo failed"
 
-echo "\n=== SD Card Devices (/sys/block/mmc*) ===" >> $LOGFILE
-ls -l /sys/block/mmc* >> $LOGFILE 2>&1 || echo "No SD card devices found in /sys/block" >> $LOGFILE
+log "\n=== fstab Contents (/etc/fstab) ==="
+run_cmd cat /etc/fstab || log "No /etc/fstab found"
+
+log "\n=== SD Card Devices (/sys/block/mmc*) ==="
+run_cmd ls -l /sys/block/mmc* || log "No SD card devices found in /sys/block"
 for dev in /sys/block/mmc*; do
-    if [ -d "$dev" ]; do
-        echo "SD Device: $dev" >> $LOGFILE
-        cat "$dev/device/name" "$dev/device/type" "$dev/device/vendor" "$dev/size" "$dev/removable" 2>/dev/null >> $LOGFILE
-        echo "" >> $LOGFILE
+    if [ -d "$dev" ]; then
+        log "SD Device: $dev"
+        cat "$dev/device/name" "$dev/device/type" "$dev/device/vendor" "$dev/size" "$dev/removable" 2>&1 | tee -a "$LOGFILE" /dev/tty1
+        log ""
     fi
 done
 
-echo "\n=== DTB Storage/SD-Related Info ===" >> $LOGFILE
+log "\n=== Filesystem Check (quick dry run with fsck -n) ==="
+for dev in $(lsblk -o NAME,MOUNTPOINT -n | awk '{if ($2 == "") print "/dev/" $1}'); do
+    if [ -b "$dev" ]; then
+        log "Quick checking $dev for errors (dry run, no fixes)..."
+        sudo fsck -n "$dev" | tee -a "$LOGFILE" /dev/tty1 2>&1 || log "fsck failed for $dev (may be mounted or not a filesystem)"
+        log ""
+    fi
+done
+
+log "\n=== SD Card Speed Tests (read/write on mounted FS only) ==="
+for sd in $(lsblk -o NAME,TYPE -n | grep -i 'mmc.*disk' | awk '{print $1}'); do
+    PART=$(lsblk -o NAME,MOUNTPOINT -n | grep "^${sd}p.* /" | awk '{print $2}' | head -1)
+    if [ -n "$PART" ] && [ -d "$PART" ]; then
+        log "Speed testing SD $sd on mounted partition $PART (safe temp file test)..."
+        TEST_FILE="$PART/tmp_speed_test.dat"
+        log "Write test:"
+        dd if=/dev/zero of="$TEST_FILE" bs=1M count=100 conv=fdatasync 2>&1 | tee -a "$LOGFILE" /dev/tty1
+        log "Read test:"
+        dd if="$TEST_FILE" of=/dev/null bs=1M count=100 2>&1 | tee -a "$LOGFILE" /dev/tty1
+        rm -f "$TEST_FILE" >> "$LOGFILE" 2>&1
+        log ""
+    else
+        log "No mounted partition for $sd; skipping speed test"
+    fi
+done
+
+log "\n=== DTB Storage/SD-Related Info ==="
 if [ -f /proc/device-tree/model ]; then
-    echo "Device Tree Model: $(cat /proc/device-tree/model)" >> $LOGFILE
-    find /proc/device-tree/ -name '*mmc*' -or -name '*sd*' -or -name '*storage*' -or -name '*disk*' -or -name '*dwmmc*' >> $LOGFILE 2>&1
+    log "Device Tree Model: $(cat /proc/device-tree/model)"
+    find /proc/device-tree/ -name '*mmc*' -or -name '*sd*' -or -name '*storage*' -or -name '*disk*' -or -name '*dwmmc*' 2>&1 | tee -a "$LOGFILE" /dev/tty1
     for node in $(find /proc/device-tree/ -name '*mmc*' -or -name '*sd*' -or -name '*storage*' -or -name '*disk*' -or -name '*dwmmc*'); do
-        if [ -d "$node" ]; do
-            echo "Node: $node" >> $LOGFILE
-            ls -l "$node" >> $LOGFILE
+        if [ -d "$node" ]; then
+            log "Node: $node"
+            ls -l "$node" | tee -a "$LOGFILE" /dev/tty1
             for prop in $(ls "$node"); do
                 if [ -f "$node/$prop" ]; then
-                    echo "  Prop $prop: $(cat "$node/$prop" 2>/dev/null || echo 'binary')" >> $LOGFILE
+                    log "  Prop $prop: $(cat "$node/$prop" 2>/dev/null || echo 'binary')"
                 fi
             done
         fi
@@ -75,8 +108,8 @@ if [ -f /proc/device-tree/model ]; then
 fi
 if command -v dtc >/dev/null 2>&1 && ls /boot/*.dtb >/dev/null 2>&1; then
     DTB_FILE=$(ls /boot/*.dtb | head -1)
-    echo "Decompiling $DTB_FILE for storage/SD nodes:" >> $LOGFILE
-    dtc -I dtb -O dts "$DTB_FILE" 2>/dev/null | grep -iE 'mmc|sd|storage|disk|dwmmc|regulator|power|domain|vcc|supply' >> $LOGFILE || echo "No storage/SD-related DTB nodes found" >> $LOGFILE
+    log "Decompiling $DTB_FILE for storage/SD nodes:"
+    dtc -I dtb -O dts "$DTB_FILE" 2>/dev/null | grep -iE 'mmc|sd|storage|disk|dwmmc|regulator|power|domain|vcc|supply' | tee -a "$LOGFILE" /dev/tty1 || log "No storage/SD-related DTB nodes found"
 else
-    echo "dtc not available or no DTB file found; install device-tree-compiler if needed" >> $LOGFILE
+    log "dtc not available or no DTB file found; install device-tree-compiler if needed"
 fi
