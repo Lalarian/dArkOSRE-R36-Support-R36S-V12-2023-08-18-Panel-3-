@@ -48,11 +48,14 @@
 ### Not fully supported (No Function Button for Emulator Menus by default):  
 - R36H thanks to the champion, xgenmann, for his help to get this **Operating System** working on his device!
 
+## Validated dArkOS Mods
+- [Bluetooth Manager](https://github.com/Jason3x/Bluetooth-Manager-for-dArkOS-) thanks to Jason_3x, make sure you leave him a star!
+
 ### In development:
+- LED swap scripts and updated dtb files for different devices (R36S, Clones and Soysauce), testing soon. 
 - Integrate expandtofat.sh fix to suppress "In the Future Warnings".
 - ogage update to support Jason3x's Pulse Audio implementation.
 - Script to update the controls for each emulator to support the R36H
-- LED swap scripts for different devices (R36S, Clones and Soysauce)
 - Supporting community requests for device support.
 
 ### If your Rk3326-based R36S, R36S Clone or Soy Sauce system is not listed
