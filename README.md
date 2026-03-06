@@ -4,8 +4,6 @@
 <img width="224" height="350" alt="image" src="https://github.com/user-attachments/assets/d0334598-9296-466f-8e6e-4ca2e15daf70" />
 </p>
 
-
-
 - **Customised dArkOS build** optimised for R36S devices and clones. 
 - **Guaranteed Virus and Malware free** - Scanned with 7th Feb 2026 ClamAV Daily update.
    
@@ -13,11 +11,8 @@
 [![GitHub stars](https://img.shields.io/github/stars/southoz/dArkOS-G80CA-RE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-RE/stargazers)
 
 ## News
-- Issues are disabled for the long weekend. Sorry if you have an urgent issue. [RetroHandhelds.gg](https://discord.com/channels/741895796315914271/1452057823927341196)
-
-## 02062026 Update Patch   
-
-[Download](https://github.com/southoz/dArkOS-G80CA-RE/releases/tag/darkOS-G80CA-RE(02062026)) from the release page.
+- **Issues** are disabled for the long weekend. [RetroHandhelds.gg](https://discord.com/channels/741895796315914271/1452057823927341196)
+- **02062026 Update Patch** [Download](https://github.com/southoz/dArkOS-G80CA-RE/releases/tag/darkOS-G80CA-RE(02062026)) under the release.
 
 ## Supported Systems  
 
