@@ -12,9 +12,10 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/southoz/dArkOS-G80CA-RE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-RE/releases)
 [![GitHub stars](https://img.shields.io/github/stars/southoz/dArkOS-G80CA-RE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-RE/stargazers)
 
-<p align="center">
-<img width="320" height="240" alt="image" src="https://github.com/user-attachments/assets/ea2ce915-3735-4c09-8e9d-bdbc6212df9b" /> &emsp; <img width="320" height="240" alt="image" src="https://github.com/user-attachments/assets/7ca0ee9e-2727-40f9-859e-1a731a485425" /> 
-</p>
+## News
+- Issue are disabled for a few days as its a long weekend, sorry if you have a urgent issue jump into [RetroHandhelds.gg](https://discord.com/channels/741895796315914271/1452057823927341196)
+
+[Download](https://github.com/southoz/dArkOS-G80CA-RE/releases/tag/darkOS-G80CA-RE(02062026))
 
 ## 02062026 Update Patch   
 
