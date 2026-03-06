@@ -13,6 +13,11 @@
 ## News
 - **Issues** are disabled for the long weekend. [RetroHandhelds.gg](https://discord.com/channels/741895796315914271/1452057823927341196)
 - **02062026 Update Patch** [Download](https://github.com/southoz/dArkOS-G80CA-RE/releases/tag/darkOS-G80CA-RE(02062026)) under the release.
+- Upcoming device support:
+  - R36H
+  - R36 Plus
+  - R36 Max
+  - R36 Ultra 
 
 ## Supported Systems  
 
