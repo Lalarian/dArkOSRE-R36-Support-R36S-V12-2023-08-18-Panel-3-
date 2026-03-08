@@ -13,6 +13,7 @@
 ## News
 - **Issues** are disabled for the long weekend. [RetroHandhelds.gg](https://discord.com/channels/741895796315914271/1452057823927341196)
 - **02062026 Update Patch** [Download](https://github.com/southoz/dArkOS-G80CA-RE/releases/tag/darkOS-G80CA-RE(02062026)) under the release.
+- **dArkOSRE-R36 03082026 Beta Image** [For Testing Only](https://github.com/southoz/dArkOSRE-R36/wiki/R36-Control-Centre) 
 - Upcoming device support:
   - R36H
   - R36 Plus
