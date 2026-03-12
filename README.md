@@ -44,7 +44,7 @@
 | [Y3506_V03_20241104](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation#soy-sauce-r36s) | soysauce   | :warning: untested |  |
 | [Y3506_v03_20241210](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation#soy-sauce-r36s) | soysauce   | :warning: untested |  |
 | [Y3506_V03_20250317](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation#soy-sauce-r36s) | soysauce   | :white_check_mark: completed | :white_check_mark: darrynmelck |
-| [Y3506_V04_20250529](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation#soy-sauce-r36s) | soysauce   | :warning: untested |  |
+| [Y3506_V04_20250529](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation#soy-sauce-r36s) | soysauce   | :warning: testing | :x: reported issue |
 | [Y3506_V05_20251215 2551](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation#soy-sauce-r36s) | soysauce   | :warning: untested |  |
 | [Y3506_V05_20251215 2601](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation#soy-sauce-r36s) | soysauce   | :white_check_mark: completed | :white_check_mark: southoz |
 
