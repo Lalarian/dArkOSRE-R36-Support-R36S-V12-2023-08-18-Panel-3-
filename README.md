@@ -10,13 +10,18 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/southoz/dArkOS-G80CA-RE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-RE/releases)
 [![GitHub stars](https://img.shields.io/github/stars/southoz/dArkOS-G80CA-RE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-RE/stargazers)
 
+- **Help with purchasing new Hardware** - Donations will help increase comptibility.
+  
+[![Donate PayPal](https://img.shields.io/badge/Donate-PayPal-009cde?logo=paypal&style=for-the-badge)](https://www.paypal.com/donate/?hosted_button_id=XSKKNR837CGE4)
+
 ## News
 - **dArkOSRE-R36 03082026** [Release](https://github.com/southoz/dArkOSRE-R36/releases/tag/dArkOSRE-R36(03082026)) 
 - Upcoming device support:
-  - R36H
-  - R36 Plus
+  - R36H - Framework is in place to support different control schemes, trying to decide on buttons.
+  - R36 Plus - New Framework to enable a 720x720 screen required which will enable the Max and Ultra.
   - R36 Max
-  - R36 Ultra 
+  - R36 Ultra
+  - V20 Clone
 
 ## Supported Systems  
 
