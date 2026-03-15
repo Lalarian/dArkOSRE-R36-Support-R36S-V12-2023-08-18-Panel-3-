@@ -20,7 +20,8 @@
   - V20 Clone
  
 ## Donations
-= Donations will go toward new hardware and testing to help increase compatibility and reduce bugs.  
+- Donations toward new hardware and testing to help increase compatibility and reduce bugs.  
+
 [![Donate PayPal](https://img.shields.io/badge/Donate-PayPal-009cde?logo=paypal&style=for-the-badge)](https://www.paypal.com/donate/?hosted_button_id=XSKKNR837CGE4)
 
 ## Supported Systems  
