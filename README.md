@@ -4,23 +4,24 @@
 <img width="224" height="350" alt="image" src="https://github.com/user-attachments/assets/d0334598-9296-466f-8e6e-4ca2e15daf70" />
 </p>
 
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/southoz/dArkOS-G80CA-RE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-RE/releases)
-[![GitHub stars](https://img.shields.io/github/stars/southoz/dArkOS-G80CA-RE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-RE/stargazers)
-
 - **Customised dArkOS build** optimised for R36S devices and clones. 
 - **Guaranteed Virus and Malware free** - Scanned with 7th Feb 2026 ClamAV Daily update.
-- **Help with purchasing new Hardware** - Donations will help increase comptibility.
-  
-[![Donate PayPal](https://img.shields.io/badge/Donate-PayPal-009cde?logo=paypal&style=for-the-badge)](https://www.paypal.com/donate/?hosted_button_id=XSKKNR837CGE4)
+
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/southoz/dArkOS-G80CA-RE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-RE/releases)
+[![GitHub stars](https://img.shields.io/github/stars/southoz/dArkOS-G80CA-RE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-RE/stargazers)
 
 ## News
 - **dArkOSRE-R36 03082026** [Release](https://github.com/southoz/dArkOSRE-R36/releases/tag/dArkOSRE-R36(03082026)) 
 - Upcoming device support:
   - R36H - Framework is in place to support different control schemes, trying to decide on buttons.
-  - R36 Plus - New Framework to enable a 720x720 screen required which will enable the Max and Ultra.
+  - R36 Plus - New Framework to enable a 720x720 screen, which is required to enable the Max and Ultra.
   - R36 Max
   - R36 Ultra
   - V20 Clone
+ 
+## Donations
+= Donations will go toward new hardware and testing to help increase compatibility and reduce bugs.  
+[![Donate PayPal](https://img.shields.io/badge/Donate-PayPal-009cde?logo=paypal&style=for-the-badge)](https://www.paypal.com/donate/?hosted_button_id=XSKKNR837CGE4)
 
 ## Supported Systems  
 
