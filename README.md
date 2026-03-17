@@ -62,6 +62,7 @@
 - [Bluetooth Manager](https://github.com/Jason3x/Bluetooth-Manager-for-dArkOS-) thanks to Jason_3x, make sure you leave him a star!
 - [Battery Voice Config](https://github.com/Jason3x/Battery-Voice-Config) thanks to Jason_3x
 - [Ghost Loader](https://github.com/Jason3x/GhostLoader) thanks to Jason_3x
+- [ArkOS Dual SDCard Manager](https://github.com/Jason3x/Arkos-Dual-SD-Manager) thanks to Jason_3x
 
 ### In development:
 - ogage update to support Jason3x's Pulse Audio implementation.
