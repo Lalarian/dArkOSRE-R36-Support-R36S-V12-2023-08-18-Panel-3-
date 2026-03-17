@@ -62,7 +62,7 @@
 - [Bluetooth Manager](https://github.com/Jason3x/Bluetooth-Manager-for-dArkOS-)
 - [Battery Voice Config](https://github.com/Jason3x/Battery-Voice-Config)
 - [Ghost Loader](https://github.com/Jason3x/GhostLoader) 
-- [ArkOS Dual SDCard Manager](https://github.com/Jason3x/Arkos-Dual-SD-Manager)
+- [ArkOS Dual SDCard Manager](https://github.com/Jason3x/Arkos-Dual-SD-Manager)  
 [Support Jason Here](https://github.com/Jason3x/Arkos-Dual-SD-Manager#-a-coffee-to-support-the-project)
 
 ### In development:
