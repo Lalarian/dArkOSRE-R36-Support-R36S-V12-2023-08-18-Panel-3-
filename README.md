@@ -10,6 +10,8 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/southoz/dArkOS-G80CA-RE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-RE/releases)
 [![GitHub stars](https://img.shields.io/github/stars/southoz/dArkOS-G80CA-RE?style=flat-square)](https://github.com/southoz/dArkOS-G80CA-RE/stargazers)
 
+## Issues are disabled for a few days, busy IRL, back shortly.
+
 ## News
 - **dArkOSRE-R36 03082026** [Release](https://github.com/southoz/dArkOSRE-R36/releases/tag/dArkOSRE-R36(03082026)) 
 - Upcoming device support:
