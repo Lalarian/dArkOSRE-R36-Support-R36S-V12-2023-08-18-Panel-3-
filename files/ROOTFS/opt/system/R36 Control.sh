@@ -3,7 +3,7 @@
 #
 # Adapted from Wifi.sh by: southoz <retrooz@users.x.com>
 # For customizing devices based on the hardware
-# Full ALSA audio controls (path + boot volume + clear option) added
+# Full ALSA audio controls + control scheme selection added
 
 sudo chmod 666 /dev/tty1
 reset
@@ -38,9 +38,12 @@ CUR_SCRIPT=$(sudo grep '^active_script =' "$CONFIG_FILE" 2>/dev/null | awk -F' =
 CUR_GAMMA_RAW=$(sudo grep '^gamma =' "$CONFIG_FILE" 2>/dev/null | awk -F' = ' '{print $2}' | tr -d '[:space:]')
 [ -z "$CUR_GAMMA_RAW" ] && CUR_GAMMA="1.0" || CUR_GAMMA="$CUR_GAMMA_RAW"
 
-# Audio defaults – empty string means "Manual" (no boot enforcement)
+# Audio defaults
 CUR_ALSA_PATH=$(sudo grep '^alsa_path =' "$CONFIG_FILE" 2>/dev/null | awk -F' = ' '{print $2}' | tr -d '[:space:]' || echo "SPK_HP")
 CUR_ALSA_VOLUME=$(sudo grep '^alsa_volume =' "$CONFIG_FILE" 2>/dev/null | awk -F' = ' '{print $2}' | tr -d '[:space:]' || echo "")
+
+# Control scheme
+CUR_CONTROL_SCHEME=$(sudo grep '^control_scheme =' "$CONFIG_FILE" 2>/dev/null | awk -F' = ' '{print $2}' | tr -d '[:space:]' || echo "default")
 
 ExitMenu() {
   printf "\033c" > /dev/tty1
@@ -190,17 +193,14 @@ SelectALSAPath() {
 
   dialog --infobox "Applying $choice ..." 5 $width
 
-  # Update config
   if sudo grep -q '^alsa_path =' "$CONFIG_FILE"; then
     sudo sed -i "s/^alsa_path =.*/alsa_path = $choice/" "$CONFIG_FILE"
   else
     echo "alsa_path = $choice" | sudo tee -a "$CONFIG_FILE" >/dev/null
   fi
 
-  # Live ALSA set
   sudo amixer -c 0 cset iface=MIXER,name='Playback Path' "$choice" >/dev/null 2>&1
 
-  # Update ogage
   sudo systemctl stop ogage.service 2>/dev/null
   if [ "$choice" = "SPK" ]; then
     sudo cp /usr/local/bin/r36_config/ogage/ogage.SPK /usr/local/bin/ogage
@@ -263,11 +263,60 @@ SetBootVolume() {
   AudioMenu
 }
 
+SelectControlScheme() {
+  dialog --infobox "\nSelecting control scheme for your device..." 5 $width
+
+  declare -a ctrl_options=(
+    "default"      "Default R36 Controls (Function Button → emulators menu)"
+    "no_function"  "No Function Button (R36H style)"
+  )
+
+  choice=$(dialog --backtitle "Current: $CUR_CONTROL_SCHEME" \
+    --title "Select Control Scheme" \
+    --no-collapse --clear --cancel-label "Back" \
+    --menu "R36H devices must use 'no_function'" \
+    12 $width 8 "${ctrl_options[@]}" 2>&1 >/dev/tty1)
+
+  [[ $? -ne 0 ]] && UtilitiesMenu
+
+  dialog --infobox "Applying $choice ..." 5 $width
+
+  # Run the script cleanly to get real exit status (no redirection here)
+  sudo /usr/local/bin/r36_config/r36_controls.sh "$choice"
+  status=$?
+
+  # Log output in a separate invocation that we don't care if it fails
+  sudo /usr/local/bin/r36_config/r36_controls.sh "$choice" >> /boot/darkosre_device.log 2>&1 || true
+
+  # Add explicit menu-level logging for visibility
+  log_msg="$(date '+%Y-%m-%d %H:%M:%S') [R36 Control] Applied control scheme: $choice (status $status)"
+  echo "$log_msg" >> /boot/darkosre_device.log 2>/dev/null || true
+
+  if [ $status -eq 0 ]; then
+    msg="Successfully applied $choice"
+  else
+    msg="Warning: r36_controls.sh exited with status $status (but script ran)"
+  fi
+
+  if sudo grep -q '^control_scheme =' "$CONFIG_FILE"; then
+    sudo sed -i "s/^control_scheme =.*/control_scheme = $choice/" "$CONFIG_FILE"
+  else
+    echo "control_scheme = $choice" | sudo tee -a "$CONFIG_FILE" >/dev/null
+  fi
+  sudo sync
+
+  CUR_CONTROL_SCHEME="$choice"
+
+  dialog --msgbox "$msg\n\nControl scheme set to $choice\n(Reboot recommended for full effect)" 10 $width
+  UtilitiesMenu
+}
+
 UtilitiesMenu() {
   utils_options=(
     1 "View Current Config"
     2 "Delete Current Config (reboot to apply)"
-    3 "Back"
+    3 "Select Control Scheme"
+    4 "Back"
   )
 
   while true; do
@@ -292,15 +341,16 @@ UtilitiesMenu() {
           sudo rm -f "$CONFIG_FILE"
           sudo sync
           dialog --msgbox "Config file deleted.\n\nDefaults will be restored on reboot." 7 $width
-          # Refresh displayed values
           CUR_GAMMA="1.0"
           CUR_SCRIPT="None"
           CUR_ALSA_PATH="SPK_HP"
           CUR_ALSA_VOLUME=""
+          CUR_CONTROL_SCHEME="default"
           MainMenu
         fi
         ;;
-      3) MainMenu ;;
+      3) SelectControlScheme ;;
+      4) MainMenu ;;
     esac
   done
 }
@@ -321,7 +371,7 @@ MainMenu() {
     choice=$(dialog --backtitle "R36 Control Centre: $HARDWARE_MODEL" \
       --title "Main Menu" \
       --no-collapse --clear --cancel-label "Select + Start to Exit" \
-      --menu "Current gamma: $CUR_GAMMA\nLED script: $CUR_SCRIPT\nALSA path: $CUR_ALSA_PATH\nBoot volume: $vol_display" \
+      --menu "Current gamma: $CUR_GAMMA\nLED script: $CUR_SCRIPT\nALSA path: $CUR_ALSA_PATH\nBoot volume: $vol_display\nControl scheme: $CUR_CONTROL_SCHEME" \
       $height $width 15 "${mainoptions[@]}" 2>&1 >/dev/tty1)
 
     [[ $? -ne 0 ]] && exit 1
