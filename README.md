@@ -53,7 +53,7 @@
 | [R36S-V12 2023-08-18 Variant 2 Panel 1 A](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation/#r36s-clones) | clone  | :warning: untested |  |
 | [R36S-V12 2023-08-18 Variant 3 Panel A](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation/#r36s-clones) | clone  | :white_check_mark: completed | :white_check_mark: southoz |
 | [R36S-V12 2023-08-18 Variant 3 Panel 3](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation/#r36s-clones) | clone  | :white_check_mark: completed | :white_check_mark: dnmnhat |
-| [R36S-V20 2025-05-18 2541](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation/#r36s-clones) | clone | :warning: [Beta Testing](https://github.com/southoz/dArkOSRE-R36/wiki/Beta-Testing) | :warning: untested  |
+| [R36S-V20 2025-05-18 2541](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation/#r36s-clones) | clone | :warning: [Beta Testing](https://github.com/southoz/dArkOSRE-R36/wiki/Beta-Testing) | :white_check_mark: trofim601-create |
 | [R36S-V20 2025-05-18 2548](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation/#r36s-clones) | clone | :warning: [Beta Testing](https://github.com/southoz/dArkOSRE-R36/wiki/Beta-Testing) | :white_check_mark: southoz  |
 | [R36S-V20 2025-05-18 2549](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation/#r36s-clones) | clone | :warning: [Beta Testing](https://github.com/southoz/dArkOSRE-R36/wiki/Beta-Testing) | :warning: untested  |
 | [Y3506_V03_20241104](https://github.com/southoz/dArkOS-G80CA-RE/wiki/Firmware-Installation#soy-sauce-r36s) | soysauce   | :white_check_mark: completed | :white_check_mark: Gr33k |
