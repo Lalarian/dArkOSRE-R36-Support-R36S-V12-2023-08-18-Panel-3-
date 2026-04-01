@@ -1,11 +1,10 @@
 #Requires -Version 5.1
 Set-StrictMode -Version Latest
-
 $ErrorActionPreference = 'Stop'
-$host.UI.RawUI.WindowTitle = "R36S / Clone / Soysauce DTB Selector"
+$host.UI.RawUI.WindowTitle = "R36S / Clone / Soysauce DTB + Logo Selector"
 
 Write-Host "`n==================================================" -ForegroundColor Cyan
-Write-Host "   R36S DTB Firmware Selector"                   -ForegroundColor Cyan
+Write-Host "   R36S DTB Firmware + Logo Selector"           -ForegroundColor Cyan
 Write-Host "==================================================`n" -ForegroundColor Cyan
 
 # Determine root folder
@@ -86,7 +85,7 @@ Write-Host "`nAvailable devices:" -ForegroundColor Cyan
 Write-Host ""
 
 $globalIndex = 1
-$deviceList = @{}
+$deviceList = @{}   # Device selection lookup
 
 foreach ($variant in $sortedVariants) {
     $devicesInGroup = $grouped[$variant]
@@ -97,24 +96,25 @@ foreach ($variant in $sortedVariants) {
     Write-Host ("-" * 70) -ForegroundColor DarkGray
 
     $half = [math]::Ceiling($devicesInGroup.Count / 2)
-    $left  = $devicesInGroup[0..($half-1)]
-    $right = $devicesInGroup[$half..($devicesInGroup.Count-1)]
 
     for ($row = 0; $row -lt $half; $row++) {
         $leftPart = ""
         $rightPart = ""
 
-        if ($row -lt $left.Count) {
+        # Left column
+        if ($row -lt $devicesInGroup.Count) {
             $num = $globalIndex
-            $leftPart = "{0,4}. {1}" -f $num, $left[$row]
-            $deviceList[$num] = $left[$row]
+            $leftPart = "{0,4}. {1}" -f $num, $devicesInGroup[$row]
+            $deviceList[$num] = $devicesInGroup[$row]
             $globalIndex++
         }
 
-        if ($row -lt $right.Count) {
+        # Right column
+        $rightIdx = $row + $half
+        if ($rightIdx -lt $devicesInGroup.Count) {
             $num = $globalIndex
-            $rightPart = "{0,4}. {1}" -f $num, $right[$row]
-            $deviceList[$num] = $right[$row]
+            $rightPart = "{0,4}. {1}" -f $num, $devicesInGroup[$rightIdx]
+            $deviceList[$num] = $devicesInGroup[$rightIdx]
             $globalIndex++
         }
 
@@ -149,17 +149,28 @@ if ($selNum -lt 1 -or $selNum -gt $sections.Count) {
 $chosen  = $deviceList[$selNum]
 $variant = $sections[$chosen]['variant']
 
-if (-not $variant) {
-    Write-Host "ERROR: No 'variant' defined for $chosen" -ForegroundColor Red
-    Pause
-    exit 1
-}
-
 Write-Host "`nSelected : $chosen" -ForegroundColor Green
 Write-Host "Variant  : $variant" -ForegroundColor Green
 
-# Build path
-$sourceFolder = "$rootDir\dtb\$variant\$chosen"
+# ── Get resolution for logo selection ─────────────────────────────────────
+$resolution = ""
+if ($sections[$chosen].ContainsKey('resolution')) {
+    $resolution = $sections[$chosen]['resolution'].Trim()
+}
+
+$logoSrc = $null
+if ($resolution -eq "640x480") {
+    $logoSrc = Join-Path $rootDir "dtb\logo\logo-640x480.bmp"
+    Write-Host "Using 640x480 logo" -ForegroundColor Cyan
+} elseif ($resolution -eq "720x720") {
+    $logoSrc = Join-Path $rootDir "dtb\logo\logo-720x720.bmp"
+    Write-Host "Using 720x720 logo" -ForegroundColor Cyan
+} else {
+    Write-Host "WARNING: No valid resolution found for $chosen (got: '$resolution'). No logo will be copied." -ForegroundColor Yellow
+}
+
+# Build source folder
+$sourceFolder = Join-Path $rootDir "dtb\$variant\$chosen"
 
 if (-not (Test-Path $sourceFolder -PathType Container)) {
     Write-Host "ERROR: Folder not found: $sourceFolder" -ForegroundColor Red
@@ -167,23 +178,17 @@ if (-not (Test-Path $sourceFolder -PathType Container)) {
     exit 1
 }
 
-Write-Host "`nWill copy files from:" -ForegroundColor Cyan
-Write-Host "  $($sourceFolder.Replace('\\','\'))" -ForegroundColor White
+# Preview
+Write-Host "`nWill copy DTB files from:" -ForegroundColor Cyan
+Write-Host "  $sourceFolder" -ForegroundColor White
 
-# Files to be copied
-Write-Host "`nFiles that will be copied from source folder:"
-$filesToCopy = @(Get-ChildItem -Path $sourceFolder -File -ErrorAction SilentlyContinue)
-
-if ($filesToCopy.Count -eq 0) {
-    Write-Host "  WARNING: No files found in source folder!" -ForegroundColor Yellow
-} else {
-    $filesToCopy | ForEach-Object { "  $($_.Name)" }
+if ($logoSrc -and (Test-Path $logoSrc)) {
+    Write-Host "`nWill replace logo.bmp with:" -ForegroundColor Cyan
+    Write-Host "  $logoSrc to logo.bmp" -ForegroundColor White
 }
 
-# Files in root that will be deleted/overwritten (only .dtb files)
 Write-Host "`n.dtbfiles in root that will be deleted/overwritten:"
 $existingDtbs = @(Get-ChildItem -Path $rootDir -File -Filter "*.dtb" -ErrorAction SilentlyContinue)
-
 if ($existingDtbs.Count -eq 0) {
     Write-Host "  (none currently present)"
 } else {
@@ -191,41 +196,49 @@ if ($existingDtbs.Count -eq 0) {
 }
 
 Write-Host ""
-
-$confirm = Read-Host "Proceed with copy? (Y/N)"
+$confirm = Read-Host "Proceed with copy + logo update? (Y/N)"
 if ($confirm -notmatch '^[Yy]$') {
     Write-Host "Cancelled." -ForegroundColor Yellow
     Pause
     exit 0
 }
 
-# Delete old .dtb files only (no boot.ini)
+# === Apply changes ===
 Write-Host "`nDeleting old .dtb files in root..." -ForegroundColor Yellow
-
-$deleted = @(Get-ChildItem -Path $rootDir -File -Filter "*.dtb" -ErrorAction SilentlyContinue)
-
-if ($deleted.Count -gt 0) {
-    $deleted | Remove-Item -Force -ErrorAction SilentlyContinue
-    Write-Host "Deleted:"
-    $deleted | ForEach-Object { "  $($_.Name)" }
-} else {
-    Write-Host "  No .dtb files to delete"
+Get-ChildItem -Path $rootDir -Filter "*.dtb" -File | ForEach-Object {
+    Remove-Item $_.FullName -Force
+    Write-Host "  Deleted $($_.Name)"
 }
 
-# Copy new files
-Write-Host "`nCopying new files to root..." -ForegroundColor Yellow
-
-$copied = @(Copy-Item -Path "$sourceFolder\*" -Destination $rootDir -Force -PassThru -ErrorAction Stop)
-
-if ($copied.Count -gt 0) {
-    Write-Host "Copied:"
-    $copied | ForEach-Object { "  $($_.Name)" }
+Write-Host "`nRemoving existing logo.bmp..." -ForegroundColor Yellow
+$oldLogo = Join-Path $rootDir "logo.bmp"
+if (Test-Path $oldLogo) {
+    Remove-Item $oldLogo -Force
+    Write-Host "  logo.bmp deleted"
 } else {
-    Write-Host "  No files were copied (source may be empty)" -ForegroundColor Yellow
+    Write-Host "  No logo.bmp present"
+}
+
+Write-Host "`nCopying new DTB files to root..." -ForegroundColor Yellow
+$copied = Copy-Item -Path "$sourceFolder\*" -Destination $rootDir -Force -Include "*.dtb" -PassThru -ErrorAction Stop
+if ($copied.Count -gt 0) {
+    $copied | ForEach-Object { Write-Host "  Copied $($_.Name)" }
+} else {
+    Write-Host "  No DTB files copied" -ForegroundColor Yellow
+}
+
+# Copy correct logo and rename to logo.bmp
+if ($logoSrc -and (Test-Path $logoSrc)) {
+    Write-Host "`nInstalling logo..." -ForegroundColor Yellow
+    Copy-Item -Path $logoSrc -Destination (Join-Path $rootDir "logo.bmp") -Force
+    Write-Host "  logo.bmp installed (from $resolution resolution)"
+} else {
+    Write-Host "  No logo installed (missing source or unknown resolution)" -ForegroundColor Yellow
 }
 
 Write-Host "`n==================================================" -ForegroundColor Green
-Write-Host "   SUCCESS - DTB files updated for:"           -ForegroundColor Green
+Write-Host "   SUCCESS - DTB + Logo updated for:"           -ForegroundColor Green
 Write-Host "   $chosen"                                     -ForegroundColor White
 Write-Host "   Variant: $variant"                           -ForegroundColor White
+Write-Host "   Resolution: $resolution"                     -ForegroundColor White
 Write-Host "==================================================`n" -ForegroundColor Green
