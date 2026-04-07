@@ -4,6 +4,7 @@
 # Adapted from Wifi.sh by: southoz <retrooz@users.x.com>
 # For customizing devices based on the hardware
 # Full ALSA audio controls + control scheme selection added
+# NEW: Video profile system (640x480.ini / 720x720.ini etc) for panel-specific tweaks
 
 sudo chmod 666 /dev/tty1
 reset
@@ -44,6 +45,9 @@ CUR_ALSA_VOLUME=$(sudo grep '^alsa_volume =' "$CONFIG_FILE" 2>/dev/null | awk -F
 
 # Control scheme
 CUR_CONTROL_SCHEME=$(sudo grep '^control_scheme =' "$CONFIG_FILE" 2>/dev/null | awk -F' = ' '{print $2}' | tr -d '[:space:]' || echo "default")
+
+# NEW: Video resolution profile (from r36_config.ini / devices.ini)
+CUR_RESOLUTION=$(sudo grep '^resolution =' "$CONFIG_FILE" 2>/dev/null | awk -F' = ' '{print $2}' | tr -d '[:space:]' || echo "640x480")
 
 ExitMenu() {
   printf "\033c" > /dev/tty1
@@ -311,12 +315,65 @@ SelectControlScheme() {
   UtilitiesMenu
 }
 
+# NEW: Video Profile selector (mirrors SelectControlScheme exactly)
+SelectVideoProfile() {
+  dialog --infobox "\nScanning video profiles..." 5 $width > /dev/tty1
+  sleep 1
+
+  VIDEO_DIR="/usr/local/bin/r36_config/video"
+  [ ! -d "$VIDEO_DIR" ] && { dialog --msgbox "Directory $VIDEO_DIR not found!" 6 $width; UtilitiesMenu; }
+
+  mapfile -t profiles < <(ls -1 "$VIDEO_DIR" 2>/dev/null | grep '\.ini$' | sed 's/\.ini$//')
+
+  if [ ${#profiles[@]} -eq 0 ]; then
+    dialog --msgbox "No video profiles found in $VIDEO_DIR" 6 $width
+    UtilitiesMenu
+  fi
+
+  declare -a voptions=()
+  for p in "${profiles[@]}"; do
+    voptions+=("$p" ".")
+  done
+
+  while true; do
+    choice=$(dialog --backtitle "Current: $CUR_RESOLUTION" \
+      --title "Select Video Profile" \
+      --no-collapse --clear --cancel-label "Back" \
+      --menu "" $height $width 15 "${voptions[@]}" 2>&1 >/dev/tty1)
+
+    [[ $? -ne 0 ]] && UtilitiesMenu
+
+    dialog --infobox "Applying $choice ..." 5 $width
+
+    sudo /usr/local/bin/r36_config/r36_video.sh "$choice"
+    status=$?
+
+    if [ $status -eq 0 ]; then
+      msg="Successfully applied $choice"
+      if sudo grep -q '^resolution =' "$CONFIG_FILE"; then
+        sudo sed -i "s/^resolution =.*/resolution = $choice/" "$CONFIG_FILE"
+      else
+        echo "resolution = $choice" | sudo tee -a "$CONFIG_FILE" >/dev/null
+      fi
+      CUR_RESOLUTION="$choice"
+    else
+      msg="Warning: r36_video.sh exited with status $status"
+    fi
+
+    sudo sync
+    dialog --infobox "$msg" 6 $width
+    sleep 2
+    UtilitiesMenu
+  done
+}
+
 UtilitiesMenu() {
   utils_options=(
     1 "View Current Config"
     2 "Delete Current Config (reboot to apply)"
     3 "Select Control Scheme"
-    4 "Back"
+    4 "Select Video Profile"
+    5 "Back"
   )
 
   while true; do
@@ -346,11 +403,13 @@ UtilitiesMenu() {
           CUR_ALSA_PATH="SPK_HP"
           CUR_ALSA_VOLUME=""
           CUR_CONTROL_SCHEME="default"
+          CUR_RESOLUTION="640x480"
           MainMenu
         fi
         ;;
       3) SelectControlScheme ;;
-      4) MainMenu ;;
+      4) SelectVideoProfile ;;
+      5) MainMenu ;;
     esac
   done
 }
@@ -371,7 +430,7 @@ MainMenu() {
     choice=$(dialog --backtitle "R36 Control Centre: $HARDWARE_MODEL" \
       --title "Main Menu" \
       --no-collapse --clear --cancel-label "Select + Start to Exit" \
-      --menu "Current gamma: $CUR_GAMMA\nLED script: $CUR_SCRIPT\nALSA path: $CUR_ALSA_PATH\nBoot volume: $vol_display\nControl scheme: $CUR_CONTROL_SCHEME" \
+      --menu "Current gamma: $CUR_GAMMA\nLED script: $CUR_SCRIPT\nALSA path: $CUR_ALSA_PATH\nBoot volume: $vol_display\nControl scheme: $CUR_CONTROL_SCHEME\nVideo profile: $CUR_RESOLUTION" \
       $height $width 15 "${mainoptions[@]}" 2>&1 >/dev/tty1)
 
     [[ $? -ne 0 ]] && exit 1

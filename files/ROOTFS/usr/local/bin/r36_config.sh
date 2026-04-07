@@ -5,6 +5,9 @@
 # Writes current gamma to /dev/shm/CURRENT_GAMMA every boot (volatile runtime file)
 # FIXED: 80% default volume ONLY on first boot/hardware change.  No alsa_volume line = manual control.
 # NEW: control_scheme handling (default / no_function) for R36H support
+# NEW: resolution-based video profile system (mirrors controls exactly)
+#       → applies custom video/display tweaks from /usr/local/bin/r36_config/video/<resolution>.ini
+#       → perfect sync with DTB selection, LED GPIO variant, and controls
 
 set -euo pipefail
 
@@ -22,7 +25,7 @@ log() {
     echo "$msg" > /dev/kmsg 2>/dev/null || true
 }
 
-log "Early boot LED variant + gamma + ALSA audio + controls config starting..."
+log "Early boot LED variant + gamma + ALSA audio + controls config + VIDEO PROFILE starting..."
 
 # Hardware detection
 HARDWARE_RAW=$(grep -i '^Hardware' /proc/cpuinfo | awk -F': ' '{print $2}' | head -n1 | sed 's/^[ \t]*//;s/[ \t]*$//')
@@ -92,28 +95,48 @@ fi
 [ -z "$GAMMA_VALUE" ] && GAMMA_VALUE="1.0"
 log "Gamma value from devices.ini (or default 1.0): $GAMMA_VALUE"
 
+# NEW: Resolution lookup for video profile (used by r36_video.sh + R36 Control menu)
+RESOLUTION=""
+if [ -f "$DEVICES_FILE" ]; then
+    RESOLUTION=$(sed -n "/^\[$HARDWARE_RAW\]/,/^\[/ s/^resolution[ \t]*=[ \t]*//p" "$DEVICES_FILE" | head -1 | xargs)
+    if [ -z "$RESOLUTION" ]; then
+        RESOLUTION=$(sed -n "/^\[.*$HARDWARE_NORM.*\]/,/^\[/ s/^resolution[ \t]*=[ \t]*//p" "$DEVICES_FILE" | head -1 | xargs)
+    fi
+fi
+[ -z "$RESOLUTION" ] && RESOLUTION="640x480"
+log "Resolution from devices.ini (or default): $RESOLUTION"
+
 # LED + config handling (first boot / hardware change)
 NEEDS_LED_UPDATE=0
 NEEDS_CONTROLS_UPDATE=0
+NEEDS_VIDEO_UPDATE=0
 
 if [ ! -f "$CONFIG_FILE" ]; then
     NEEDS_LED_UPDATE=1
     if [ "$CONTROL_SCHEME" != "default" ]; then
         NEEDS_CONTROLS_UPDATE=1
     fi
-    log "Config file missing (first boot) - performing full setup"
+    NEEDS_VIDEO_UPDATE=1
+    log "Config file missing (first boot) - performing full setup (LED + controls + VIDEO)"
 else
     CURRENT_HARDWARE=$(grep '^hardware[ \t]*=' "$CONFIG_FILE" | cut -d'=' -f2 | xargs || echo "")
     CURRENT_CONTROL_SCHEME=$(grep '^control_scheme[ \t]*=' "$CONFIG_FILE" | cut -d'=' -f2 | sed 's/^[ \t]*//;s/[ \t]*$//' || echo "default")
+    CURRENT_RESOLUTION=$(grep '^resolution[ \t]*=' "$CONFIG_FILE" | cut -d'=' -f2 | xargs || echo "640x480")
 
     if [ "$CURRENT_HARDWARE" != "$HARDWARE_RAW" ]; then
         NEEDS_LED_UPDATE=1
-        log "Hardware change detected: '$CURRENT_HARDWARE' → '$HARDWARE_RAW'"
+        NEEDS_VIDEO_UPDATE=1
+        log "Hardware change detected: '$CURRENT_HARDWARE' → '$HARDWARE_RAW' (LED + VIDEO will be reapplied)"
     fi
 
     if [ "$CURRENT_CONTROL_SCHEME" != "$CONTROL_SCHEME" ]; then
         NEEDS_CONTROLS_UPDATE=1
         log "Control scheme changed: '$CURRENT_CONTROL_SCHEME' → '$CONTROL_SCHEME'"
+    fi
+
+    if [ "$CURRENT_RESOLUTION" != "$RESOLUTION" ]; then
+        NEEDS_VIDEO_UPDATE=1
+        log "Resolution change detected: '$CURRENT_RESOLUTION' → '$RESOLUTION' (video profile will be reapplied)"
     fi
 fi
 
@@ -153,9 +176,22 @@ if [ "$NEEDS_CONTROLS_UPDATE" = "1" ]; then
 fi
 
 # ────────────────────────────────────────────────
+# VIDEO PROFILE HANDLING (mirrors controls exactly - NEW)
+# ────────────────────────────────────────────────
+if [ "$NEEDS_VIDEO_UPDATE" = "1" ]; then
+    VIDEO_SCRIPT="/usr/local/bin/r36_config/r36_video.sh"
+    if [ -x "$VIDEO_SCRIPT" ]; then
+        log "Applying video profile for resolution: $RESOLUTION"
+        "$VIDEO_SCRIPT" "$RESOLUTION" 2>>"$LOG_FILE" || log "WARNING: r36_video.sh returned non-zero"
+    else
+        log "WARNING: $VIDEO_SCRIPT missing/not executable"
+    fi
+fi
+
+# ────────────────────────────────────────────────
 # WRITE / UPDATE CONFIG FILE
 # ────────────────────────────────────────────────
-if [ "$NEEDS_LED_UPDATE" = "1" ] || [ "$NEEDS_CONTROLS_UPDATE" = "1" ]; then
+if [ "$NEEDS_LED_UPDATE" = "1" ] || [ "$NEEDS_CONTROLS_UPDATE" = "1" ] || [ "$NEEDS_VIDEO_UPDATE" = "1" ]; then
     log "Writing/updating config file"
 
     TMP_CONFIG=$(mktemp /tmp/r36_config.XXXXXX 2>/dev/null) || true
@@ -169,6 +205,7 @@ active_script = ${SELECTED:-None}
 alsa_path = $ALSA_PATH
 control_scheme = $CONTROL_SCHEME
 gamma = $GAMMA_VALUE
+resolution = $RESOLUTION
 EOF
         if mv "$TMP_CONFIG" "$CONFIG_FILE" 2>>"$LOG_FILE" && sync && chmod 666 "$CONFIG_FILE" 2>>"$LOG_FILE"; then
             log "Config successfully written via temp file: $CONFIG_FILE"
@@ -187,6 +224,7 @@ active_script = ${SELECTED:-None}
 alsa_path = $ALSA_PATH
 control_scheme = $CONTROL_SCHEME
 gamma = $GAMMA_VALUE
+resolution = $RESOLUTION
 EOF
         sync
         chmod 666 "$CONFIG_FILE" 2>>"$LOG_FILE" || log "chmod failed in fallback (but file may still exist)"

@@ -82,7 +82,7 @@ fi
 	   continue
 	  fi
 	done
-	#echo 80
+	echo 70
 	sync
 	sudo rm -rf /roms/themes/es-theme-nes-box/ &> /dev/null
 	cd /tempthemes
@@ -108,7 +108,7 @@ fi
 	  fi
 	done
 	sync
-	#echo 95
+	echo 95
 	sleep 1
 	cd ..
 	while true; do
