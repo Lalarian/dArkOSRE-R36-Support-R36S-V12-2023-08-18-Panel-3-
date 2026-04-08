@@ -77,8 +77,10 @@
 
 ### In development:
 - ogage update to support Jason3x's Pulse Audio implementation.
-- Script to update the controls for each emulator to support the R36H
 - Supporting community requests for device support.
+
+### User Wish List:
+- [Global Search Function](https://github.com/southoz/dArkOSRE-R36/issues/133)
 
 ### If your Rk3326-based R36S, R36S Clone or Soy Sauce system is not listed
 Raise an [issue](https://github.com/southoz/dArkOS-G80CA-RE/issues) with the motherboard ID and attach your original SD card .dtb files and boot.ini in a zip file
