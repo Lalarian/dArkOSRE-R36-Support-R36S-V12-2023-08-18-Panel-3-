@@ -4,7 +4,6 @@
 <img width="224" height="350" alt="image" src="https://github.com/user-attachments/assets/d0334598-9296-466f-8e6e-4ca2e15daf70" />
 </p>
 
-- **Issues are OFF for the Easter Break** I will continue to do updates to the Beta. 
 - **Customised dArkOS build** optimised for R36S devices and clones. 
 - **Guaranteed Virus and Malware free** - Scanned with 7th Feb 2026 ClamAV Daily update.
 
