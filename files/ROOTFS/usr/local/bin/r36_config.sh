@@ -8,6 +8,10 @@
 # NEW: resolution-based video profile system (mirrors controls exactly)
 #       → applies custom video/display tweaks from /usr/local/bin/r36_config/video/<resolution>.ini
 #       → perfect sync with DTB selection, LED GPIO variant, and controls
+# NEW: speaker_enable_gpio + headphone_detect_gpio support (SoySauce + specific clones)
+#       → exported/permissions set for ogage (ark user)
+#       → initial speaker state based on headphone jack detect (reversed logic)
+#       → full sync with DTB/hardware detection to prevent audio mute conflicts and double-power issues
 
 set -euo pipefail
 
@@ -25,7 +29,7 @@ log() {
     echo "$msg" > /dev/kmsg 2>/dev/null || true
 }
 
-log "Early boot LED variant + gamma + ALSA audio + controls config + VIDEO PROFILE starting..."
+log "Early boot LED variant + gamma + ALSA audio + controls config + VIDEO PROFILE + SPEAKER GPIO starting..."
 
 # Hardware detection
 HARDWARE_RAW=$(grep -i '^Hardware' /proc/cpuinfo | awk -F': ' '{print $2}' | head -n1 | sed 's/^[ \t]*//;s/[ \t]*$//')
@@ -106,6 +110,23 @@ fi
 [ -z "$RESOLUTION" ] && RESOLUTION="640x480"
 log "Resolution from devices.ini (or default): $RESOLUTION"
 
+# NEW: Speaker / Headphone GPIO lookup (for SoySauce + specific clones)
+# This ensures perfect synchronisation between DTB settings and early-boot GPIO handling
+SPEAKER_GPIO=""
+HP_DETECT_GPIO=""
+if [ -f "$DEVICES_FILE" ]; then
+    SPEAKER_GPIO=$(sed -n "/^\[$HARDWARE_RAW\]/,/^\[/ s/^speaker_enable_gpio[ \t]*=[ \t]*//p" "$DEVICES_FILE" | head -1 | xargs)
+    if [ -z "$SPEAKER_GPIO" ]; then
+        SPEAKER_GPIO=$(sed -n "/^\[.*$HARDWARE_NORM.*\]/,/^\[/ s/^speaker_enable_gpio[ \t]*=[ \t]*//p" "$DEVICES_FILE" | head -1 | xargs)
+    fi
+    HP_DETECT_GPIO=$(sed -n "/^\[$HARDWARE_RAW\]/,/^\[/ s/^headphone_detect_gpio[ \t]*=[ \t]*//p" "$DEVICES_FILE" | head -1 | xargs)
+    if [ -z "$HP_DETECT_GPIO" ]; then
+        HP_DETECT_GPIO=$(sed -n "/^\[.*$HARDWARE_NORM.*\]/,/^\[/ s/^headphone_detect_gpio[ \t]*=[ \t]*//p" "$DEVICES_FILE" | head -1 | xargs)
+    fi
+fi
+log "speaker_enable_gpio from devices.ini: ${SPEAKER_GPIO:-none}"
+log "headphone_detect_gpio from devices.ini: ${HP_DETECT_GPIO:-none}"
+
 # LED + config handling (first boot / hardware change)
 NEEDS_LED_UPDATE=0
 NEEDS_CONTROLS_UPDATE=0
@@ -117,7 +138,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
         NEEDS_CONTROLS_UPDATE=1
     fi
     NEEDS_VIDEO_UPDATE=1
-    log "Config file missing (first boot) - performing full setup (LED + controls + VIDEO)"
+    log "Config file missing (first boot) - performing full setup (LED + controls + VIDEO + GPIO)"
 else
     CURRENT_HARDWARE=$(grep '^hardware[ \t]*=' "$CONFIG_FILE" | cut -d'=' -f2 | xargs || echo "")
     CURRENT_CONTROL_SCHEME=$(grep '^control_scheme[ \t]*=' "$CONFIG_FILE" | cut -d'=' -f2 | sed 's/^[ \t]*//;s/[ \t]*$//' || echo "default")
@@ -126,7 +147,7 @@ else
     if [ "$CURRENT_HARDWARE" != "$HARDWARE_RAW" ]; then
         NEEDS_LED_UPDATE=1
         NEEDS_VIDEO_UPDATE=1
-        log "Hardware change detected: '$CURRENT_HARDWARE' → '$HARDWARE_RAW' (LED + VIDEO will be reapplied)"
+        log "Hardware change detected: '$CURRENT_HARDWARE' → '$HARDWARE_RAW' (LED + VIDEO + GPIO will be reapplied)"
     fi
 
     if [ "$CURRENT_CONTROL_SCHEME" != "$CONTROL_SCHEME" ]; then
@@ -189,10 +210,10 @@ if [ "$NEEDS_VIDEO_UPDATE" = "1" ]; then
 fi
 
 # ────────────────────────────────────────────────
-# WRITE / UPDATE CONFIG FILE
+# WRITE / UPDATE CONFIG FILE (now includes new GPIO fields)
 # ────────────────────────────────────────────────
 if [ "$NEEDS_LED_UPDATE" = "1" ] || [ "$NEEDS_CONTROLS_UPDATE" = "1" ] || [ "$NEEDS_VIDEO_UPDATE" = "1" ]; then
-    log "Writing/updating config file"
+    log "Writing/updating config file (including speaker/headphone GPIOs)"
 
     TMP_CONFIG=$(mktemp /tmp/r36_config.XXXXXX 2>/dev/null) || true
     if [ -n "$TMP_CONFIG" ]; then
@@ -206,6 +227,8 @@ alsa_path = $ALSA_PATH
 control_scheme = $CONTROL_SCHEME
 gamma = $GAMMA_VALUE
 resolution = $RESOLUTION
+speaker_enable_gpio = ${SPEAKER_GPIO}
+headphone_detect_gpio = ${HP_DETECT_GPIO}
 EOF
         if mv "$TMP_CONFIG" "$CONFIG_FILE" 2>>"$LOG_FILE" && sync && chmod 666 "$CONFIG_FILE" 2>>"$LOG_FILE"; then
             log "Config successfully written via temp file: $CONFIG_FILE"
@@ -225,6 +248,8 @@ alsa_path = $ALSA_PATH
 control_scheme = $CONTROL_SCHEME
 gamma = $GAMMA_VALUE
 resolution = $RESOLUTION
+speaker_enable_gpio = ${SPEAKER_GPIO}
+headphone_detect_gpio = ${HP_DETECT_GPIO}
 EOF
         sync
         chmod 666 "$CONFIG_FILE" 2>>"$LOG_FILE" || log "chmod failed in fallback (but file may still exist)"
@@ -279,6 +304,54 @@ fi
 
 log "ALSA audio configuration complete."
 
+# ────────────────────────────────────────────────
+# DYNAMIC SPEAKER + HEADPHONE DETECT GPIO SETUP
+# (runs every boot if configured - export + permissions for ark + initial state)
+# This fixes speaker mute conflicts when switching ALSA paths and prevents double-power-button issues
+# ────────────────────────────────────────────────
+if [ -n "$SPEAKER_GPIO" ]; then
+    log "=== [r36_config] Setting up speaker GPIO $SPEAKER_GPIO (and HP detect if present) ==="
+
+    # 1. Setup Speaker GPIO (output)
+    if [ ! -d "/sys/class/gpio/gpio$SPEAKER_GPIO" ]; then
+        echo "$SPEAKER_GPIO" > /sys/class/gpio/export 2>>"$LOG_FILE" || log "WARNING: Failed to export speaker GPIO $SPEAKER_GPIO"
+    fi
+    echo "out" > "/sys/class/gpio/gpio$SPEAKER_GPIO/direction" 2>>"$LOG_FILE" || log "WARNING: Failed to set speaker direction out"
+
+    # Permissions for ogage (runs as ark)
+    chown ark:ark "/sys/class/gpio/gpio$SPEAKER_GPIO/value" 2>>"$LOG_FILE" || log "WARNING: chown speaker failed"
+    chmod 666 "/sys/class/gpio/gpio$SPEAKER_GPIO/value" 2>>"$LOG_FILE" || log "WARNING: chmod speaker 666 failed"
+
+    # 2. Setup Headphone Detect GPIO (input) if configured
+    if [ -n "$HP_DETECT_GPIO" ]; then
+        if [ ! -d "/sys/class/gpio/gpio$HP_DETECT_GPIO" ]; then
+            echo "$HP_DETECT_GPIO" > /sys/class/gpio/export 2>>"$LOG_FILE" || log "WARNING: Failed to export HP detect GPIO $HP_DETECT_GPIO"
+        fi
+        echo "in" > "/sys/class/gpio/gpio$HP_DETECT_GPIO/direction" 2>>"$LOG_FILE" || log "WARNING: Failed to set HP direction in"
+        chown ark:ark "/sys/class/gpio/gpio$HP_DETECT_GPIO/value" 2>>"$LOG_FILE" || log "WARNING: chown HP detect failed"
+        chmod 666 "/sys/class/gpio/gpio$HP_DETECT_GPIO/value" 2>>"$LOG_FILE" || log "WARNING: chmod HP detect 666 failed"
+        log "Headphone detect GPIO $HP_DETECT_GPIO ready for ogage"
+    fi
+
+    # 3. Determine and set initial speaker state (reversed logic as confirmed)
+    INITIAL=1  # default speaker ON
+    if [ -n "$HP_DETECT_GPIO" ] && [ -f "/sys/class/gpio/gpio$HP_DETECT_GPIO/value" ]; then
+        HP_STATE=$(cat "/sys/class/gpio/gpio$HP_DETECT_GPIO/value" 2>/dev/null | tr -d ' \n\r' || echo "0")
+        if [ "$HP_STATE" = "1" ]; then
+            INITIAL=0
+            log "Headphones detected (HP=$HP_STATE) → speaker MUTED (value=0)"
+        else
+            INITIAL=1
+            log "No headphones (HP=$HP_STATE) → speaker ENABLED (value=1)"
+        fi
+    else
+        log "No valid headphone_detect_gpio → default speaker ON (1)"
+    fi
+
+    echo "$INITIAL" > "/sys/class/gpio/gpio$SPEAKER_GPIO/value" 2>>"$LOG_FILE" || log "WARNING: Failed to set initial speaker value"
+    log "✅ Speaker GPIO $SPEAKER_GPIO initialized to $INITIAL | Current value: $(cat "/sys/class/gpio/gpio$SPEAKER_GPIO/value" 2>/dev/null || echo 'ERROR')"
+fi
+
 # Safer enforcement of control scheme on first boot / config regen
 if [ "$NEEDS_LED_UPDATE" = "1" ] || [ "$NEEDS_CONTROLS_UPDATE" = "1" ] || [ ! -f "$CONFIG_FILE" ]; then
         log "Detected first boot / config change - attempting to enforce control scheme: $CONTROL_SCHEME"
@@ -299,5 +372,5 @@ if [ "$NEEDS_LED_UPDATE" = "1" ] || [ "$NEEDS_CONTROLS_UPDATE" = "1" ] || [ ! -f
         fi
 fi
 
-log "Early boot configuration complete."
+log "Early boot configuration complete (LED + audio + controls + VIDEO + speaker GPIO fully synced)."
 exit 0

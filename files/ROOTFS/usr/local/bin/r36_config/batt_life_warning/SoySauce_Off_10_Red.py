@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Soy Sauce variant LED service – RK3326 DarkOS RE
-Based strictly on provided truth table:
+Soy Sauce variant LED service – RK3326 dArkOS RE
+Patched for new kernel (Apr 6 2026) on this device:
+  • Robust export (works reliably on every kernel/DTB)
 
 Not charging:
-  ≥ 11%     → Off (clean, step 7 style: Red out + 0, Blue in)
-  ≤ 10%     → solid Red (step 8 style: Blue in, Red out + 1)
-
+  ≥ 11% → Off (clean, step 7 style: Red out + 0, Blue in)
+  ≤ 10% → solid Red (step 8 style: Blue in, Red out + 1)
 Charging / Full → both high-Z (PMIC control)
 """
 
@@ -14,31 +14,37 @@ import os
 import time
 
 CAPACITY_PATH = "/sys/class/power_supply/battery/capacity"
-STATUS_PATH   = "/sys/class/power_supply/battery/status"
+STATUS_PATH = "/sys/class/power_supply/battery/status"
 
-# GPIO numbers – confirm these are correct for your Soy Sauce board
-BLUE_GPIO = "0"     # sysfs number for blue channel
-RED_GPIO  = "1"     # sysfs number for red channel
+# GPIO numbers – same on both kernels for this board
+BLUE_GPIO = "0"   # sysfs number for blue channel
+RED_GPIO  = "1"   # sysfs number for red channel
 
-BLUE_DIR  = f"/sys/class/gpio/gpio{BLUE_GPIO}/direction"
-BLUE_VAL  = f"/sys/class/gpio/gpio{BLUE_GPIO}/value"
-RED_DIR   = f"/sys/class/gpio/gpio{RED_GPIO}/direction"
-RED_VAL   = f"/sys/class/gpio/gpio{RED_GPIO}/value"
+BLUE_DIR = f"/sys/class/gpio/gpio{BLUE_GPIO}/direction"
+BLUE_VAL = f"/sys/class/gpio/gpio{BLUE_GPIO}/value"
+RED_DIR  = f"/sys/class/gpio/gpio{RED_GPIO}/direction"
+RED_VAL  = f"/sys/class/gpio/gpio{RED_GPIO}/value"
 
 # State tracking to prevent flicker
 prev_capacity = -1
-prev_status   = ""
-prev_mode     = ""          # "charging", "off", "red", "error"
+prev_status = ""
+prev_mode = ""  # "charging", "off", "red", "error"
 
 def export_gpio(pin):
-    path = f"/sys/class/gpio/gpio{pin}"
-    if not os.path.exists(path):
-        try:
-            with open("/sys/class/gpio/export", "w") as f:
-                f.write(pin)
-            time.sleep(0.4)
-        except:
-            pass
+    """Force clean export every time – works on every kernel/DTB"""
+    # Unexport first (ignore error if not exported)
+    try:
+        with open("/sys/class/gpio/unexport", "w") as f:
+            f.write(pin)
+    except:
+        pass
+    # Export
+    try:
+        with open("/sys/class/gpio/export", "w") as f:
+            f.write(pin)
+        time.sleep(0.4)
+    except:
+        pass  # already exported or permission
 
 def set_input(pin_dir):
     try:
@@ -80,7 +86,7 @@ def soy_disable():
 # Initial setup
 export_gpio(BLUE_GPIO)
 export_gpio(RED_GPIO)
-soy_off()           # safe default
+soy_off()  # safe default
 
 while True:
     try:
@@ -109,7 +115,7 @@ while True:
         else:
             new_mode = "red"
 
-    # Only update when mode changes
+    # Only update when mode actually changes
     if new_mode != prev_mode:
         if new_mode == "charging":
             soy_disable()
@@ -117,7 +123,6 @@ while True:
             soy_off()
         elif new_mode == "red":
             soy_red()
-
         prev_mode = new_mode
 
     time.sleep(5)

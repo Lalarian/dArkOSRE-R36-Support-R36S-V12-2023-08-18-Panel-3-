@@ -39,39 +39,7 @@ static VOLUME_UP:      EventCode = EventCode::EV_KEY(EV_KEY::KEY_VOLUMEUP);
 static VOLUME_DOWN:    EventCode = EventCode::EV_KEY(EV_KEY::KEY_VOLUMEDOWN);
 static MUTE:           EventCode = EventCode::EV_KEY(EV_KEY::BTN_TRIGGER_HAPPY3);
 
-/*fn blink1() {
-    Command::new("brightnessctl").arg("-O").output().expect("Failed to execute brightnessctl");
-
-    Command::new("brightnessctl").args(&["-T","1.5"]).output().expect("Failed to execute brightnessctl");
-    Command::new("sleep").arg("0.1").output().expect("Failed to execute brightnessctl");
-
-    Command::new("brightnessctl").arg("-I").output().expect("Failed to execute brightnessctl");
-}
-
-fn blink2() {
-    Command::new("brightnessctl").arg("-O").output().expect("Failed to execute brightnessctl");
-
-    Command::new("brightnessctl").args(&["-T","1.5"]).output().expect("Failed to execute brightnessctl");
-    Command::new("sleep").arg("0.1").output().expect("Failed to execute brightnessctl");
-
-    Command::new("brightnessctl").arg("-I").output().expect("Failed to execute brightnessctl");
-    Command::new("sleep").arg("0.1").output().expect("Failed to execute brightnessctl");
-
-    Command::new("brightnessctl").args(&["-T","1.5"]).output().expect("Failed to execute brightnessctl");
-    Command::new("sleep").arg("0.1").output().expect("Failed to execute brightnessctl");
-
-    Command::new("brightnessctl").arg("-I").output().expect("Failed to execute brightnessctl");
-}*/
-
 fn process_event(_dev: &Device, ev: &InputEvent, hotkey: bool, repeat_action: &Arc<AtomicU8>, repeat_active: &Arc<AtomicBool>) {
-//    println!("Event: time {}.{} type {} code {} value {} hotkey {}",
-//             ev.time.tv_sec,
-//             ev.time.tv_usec,
-//             ev.event_type,
-//             ev.event_code,
-//             ev.value,
-//             hotkey);
-
     if hotkey && ev.value == 1 {
         if ev.event_code == BRIGHT_UP || ev.event_code == BRIGHT_UP2 {
             repeat_action.store(RepeatAction::BrightUp as u8, Ordering::Relaxed);
@@ -86,26 +54,9 @@ fn process_event(_dev: &Device, ev: &InputEvent, hotkey: bool, repeat_action: &A
             repeat_action.store(RepeatAction::VolDown as u8, Ordering::Relaxed);
             repeat_active.store(true, Ordering::Relaxed);
         }
-        /*else if ev.event_code == PERF_MAX {
-            Command::new("sudo").args(&["perfmax", "On"]).output().expect("Failed to execute performance");
-            //blink1();
-        }
-        else if ev.event_code == PERF_NORM {
-            Command::new("sudo").arg("perfnorm").output().expect("Failed to execute performance");
-            //blink1();
-        }*/
         else if ev.event_code == EventCode::EV_KEY(EV_KEY::KEY_POWER) && ev.value > 0 {
-            //blink2();
             Command::new("finish.sh").spawn().ok().expect("Failed to execute shutdown process");
         }
-        /*else if ev.event_code == DARK_ON {
-            //Command::new("sudo").args(&["rfkill", "block", "all"]).output().expect("Failed to execute rfkill");
-            //blink1();
-        //}
-        //else if ev.event_code == DARK_OFF {
-            //Command::new("sudo").args(&["rfkill", "unblock", "all"]).output().expect("Failed to execute rfkill");
-            //blink1();
-        }*/
         else if ev.event_code == MUTE && ev.value > 0 {
             Command::new("mute_toggle.sh").output().expect("Failed to execute amixer");
         }
@@ -117,23 +68,40 @@ fn process_event(_dev: &Device, ev: &InputEvent, hotkey: bool, repeat_action: &A
         }
     }
     else if ev.event_code == EventCode::EV_SW(EV_SW::SW_HEADPHONE_INSERT) {
-        let dest = match ev.value { 1 => "SPK", _ => "HP" };
-        Command::new("amixer").args(&["-q", "sset", "'Playback Path'", dest]).output().expect("Failed to execute amixer");
+        let dest = match ev.value {
+            1 => "HP",     // headphones plugged in
+            _ => "SPK",    // headphones removed
+        };
+
+        let result = Command::new("amixer")
+            .args(["-q", "sset", "Playback Path", dest])
+            .output();
+
+        match result {
+            Ok(output) if output.status.success() => {
+                // all good
+            }
+            Ok(output) => {
+                eprintln!("amixer failed: {}", String::from_utf8_lossy(&output.stderr));
+            }
+            Err(e) => {
+                eprintln!("Failed to execute amixer: {}", e);
+            }
+        }
+
         //blink1();
     }
     else if ev.event_code == EventCode::EV_KEY(EV_KEY::KEY_POWER) && ev.value == 1 {
-        //blink2();
         Command::new("pause.sh").spawn().ok().expect("Failed to execute suspend process");
     }
-    else if ev.event_code == VOLUME_UP  && ev.value > 0 {
+    else if ev.event_code == VOLUME_UP && ev.value > 0 {
         Command::new("amixer").args(&["-q", "sset", "Playback", "1%+"]).output().expect("Failed to execute amixer");
     }
-    else if ev.event_code == VOLUME_DOWN  && ev.value > 0 {
+    else if ev.event_code == VOLUME_DOWN && ev.value > 0 {
         Command::new("amixer").args(&["-q", "sset", "Playback", "1%-"]).output().expect("Failed to execute amixer");
     }
     if ev.value == 0 {
         let code = &ev.event_code;
-
         if *code == BRIGHT_UP
             || *code == BRIGHT_UP2
             || *code == BRIGHT_DOWN
