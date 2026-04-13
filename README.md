@@ -15,9 +15,9 @@
 - Upcoming device support:
   - R36H - Framework is in place to support different control schemes, trying to decide on buttons.
   - R36 Plus - New Framework to enable a 720x720 screen, which is required to enable the Max and Ultra.
-  - R36 Max
-  - R36 Ultra
-  - V20 Clone
+  - R36 Max - Working in latest Beta
+  - R36 Ultra - Working in the latest Beta, Rk915 Wifi is not currently working.
+  - V20 Clone - Working in latest Beta
 
 [![Donate PayPal](https://img.shields.io/badge/Donate-PayPal-009cde?logo=paypal&style=for-the-badge)](https://www.paypal.com/donate/?hosted_button_id=XSKKNR837CGE4)
 
